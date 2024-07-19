@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const ShowTask = ({task, getTask}) => {
     const handleDelete=async(id)=>{
-        const resp=await axios.delete(`http://localhost:5050/api/delete/${id}`);
+        const resp=await axios.delete(`http://localhost:5050/todo/api/delete/${id}`);
         getTask();
     }
     return (

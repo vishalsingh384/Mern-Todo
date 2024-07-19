@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import router from './routes/route.js';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -10,11 +11,13 @@ const app = express();
 const PORT=process.env.PORT||5000;
 
 app.use(express.json());
+app.use(cookieParser());
 
-app.use(cors());
+//the args are for the jwt cookie set
+app.use(cors({ origin: true, credentials: true }))
 
 //routes
-app.use("/api", router);
+app.use("/todo/api", router);
 
 //start the server
 const startServer=()=>{

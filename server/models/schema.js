@@ -9,6 +9,6 @@ const todoSchema=new mongoose.Schema({
     timestamps:true
 });
 
-const URL=mongoose.model("URL", todoSchema);
-export default URL;
+const Task=mongoose.model("tasks", todoSchema);
+export default Task;
 
