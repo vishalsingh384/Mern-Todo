@@ -1,7 +1,8 @@
 import Task from "../models/schema.js";
 import bcrypt from 'bcrypt';
 import User from "../models/UserSchema.js";
-import { setUser } from "../services/auth.js";
+import { getUser, setUser } from "../services/auth.js";
+import nodemailer from 'nodemailer';
 
 export const createTask = async (req, res, next) => {
     console.log("create called");
@@ -82,11 +83,11 @@ export const registerUser = async (req, res, next) => {
 
         await newUser.save();
 
-        const currUser = user;
+        const currUser = newUser;
         const token = setUser(currUser);
-        const options={
-            httpOnly:true,
-            expires: new Date(Date.now()+1*24*60*60*1000)
+        const options = {
+            httpOnly: true,
+            expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)
         }
         if (token) {
             res.cookie("token", token, options);
@@ -120,9 +121,9 @@ export const loginUser = async (req, res, next) => {
 
         const currUser = user;
         const token = setUser(currUser);
-        const options={
-            httpOnly:true,
-            expires: new Date(Date.now()+1*24*60*60*1000)
+        const options = {
+            httpOnly: true,
+            expires: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)
         }
         if (token) {
             res.cookie("token", token, options);
@@ -133,5 +134,69 @@ export const loginUser = async (req, res, next) => {
         return res.status(401).json("Internal server error");
     }
 
+}
+
+export const forgotPass = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) {
+            res.status(404).json("User not found");
+        }
+
+        const currUser = user;
+        const token = await setUser(currUser);
+        console.log(token);
+
+        var transporter = await nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'vishalsing384@gmail.com',
+                pass: process.env.EMAIL_PASS
+            }
+        });
+
+        var mailOptions = {
+            from: 'vishalsing384@gmail.com',
+            to: email,
+            subject: 'Password Reset',
+            text: `http://localhost:5173/reset-password/${token}`
+        };
+
+        transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+                console.log(error);
+                res.status(500).json("Error sending Email");
+            } else {
+                console.log('Email sent: ' + info.response);
+                res.status(200).json("Email sent successfully");
+            }
+        });
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json("Internal server error");
+    }
+}
+
+export const resetPass = async (req, res, next) => {
+    try {
+        console.log("reset called");
+        const { token } = req.params;
+        const {password} = req.body;
+
+        const decodedUser = await getUser({ token });
+
+        if (decodedUser) {
+            const newPassword=await bcrypt.hash(password, 10);
+            const { id } = decodedUser;
+            const user = await User.findByIdAndUpdate(id, { password: newPassword });
+            if (user) {
+                return res.status(200).json("Password changed successfully");
+            }
+        }
+    } catch (err) {
+        console.log(err.message);
+        return res.status(500).json("Internal server error");
+    }
 }
 

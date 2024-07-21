@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-export const setUser = (user) => {
+export const setUser = async(user) => {
     try {
         const payload = {
             email: user.email,
@@ -12,11 +12,21 @@ export const setUser = (user) => {
         }
 
         const secretKey = process.env.KEY;
-        const token = jwt.sign(payload, secretKey, options);
+        const token = await jwt.sign(payload, secretKey, options);
         return token;
-    } catch (error) {
+    } catch (err) {
         console.log(err.message);
         return null;
     }
 
+}
+
+export const getUser=async({token})=>{
+    try {
+        const decoded=await jwt.verify(token, process.env.KEY);
+        return decoded;
+    } catch (err) {
+        console.log(err.message);
+        return null;
+    }
 }
